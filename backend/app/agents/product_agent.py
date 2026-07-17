@@ -1,33 +1,21 @@
-from app.agents.base import BaseAgent
-from app.models.state import WorkflowState
+from app.prompts.product_prompt import build_product_prompt
+from app.services.gemini import gemini
+from app.models.ai_schemas import ProductOutput
 
 
-class ProductAgent(BaseAgent):
-    """
-    Generates a product blueprint.
-    Dummy implementation.
-    """
+class ProductAgent:
 
-    def run(self, state: WorkflowState) -> WorkflowState:
+    def run(self, state):
 
-        state.product = {
-            "product_name": "AI Startup Assistant",
-            "mvp_features": [
-                "Idea Validation",
-                "Market Research",
-                "Business Blueprint",
-                "Financial Planning",
-                "Technical Roadmap"
-            ],
-            "future_features": [
-                "Pitch Deck Generator",
-                "Investor Matching",
-                "Startup Analytics"
-            ],
-            "platforms": [
-                "Web",
-                "Mobile (Future)"
-            ]
-        }
+        prompt = build_product_prompt(
+            state.idea,
+            state.business
+        )
+
+        product = gemini.generate(
+            prompt,
+            ProductOutput
+        )
+        state.product = product
 
         return state
