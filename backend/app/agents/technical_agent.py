@@ -27,24 +27,29 @@ class TechnicalAgent(BaseAgent):
 
         idea = state.idea.lower()
 
+        # Businesses that don't require custom software
         if any(keyword in idea for keyword in self.NON_TECH_KEYWORDS):
 
             state.technical = {
                 "technical_required": False,
-                "reason": "This business does not require custom software initially.",
-                "recommendation": [
-                    "Use Shopify or WooCommerce.",
-                    "Use an existing POS system.",
-                    "Use Google Workspace.",
-                    "Focus on business growth."
-                ],
-                "tech_stack": [],
+                "reason": "This business can operate efficiently using existing software solutions without building a custom application.",
+                "tech_stack": {
+                    "frontend": [],
+                    "backend": [],
+                    "database": [],
+                    "ai": [],
+                    "deployment": []
+                },
                 "architecture": [],
-                "database": [],
+                "database_tables": [],
                 "apis": [],
-                "deployment": [],
                 "security": [],
-                "scalability": []
+                "scalability": [],
+                "deployment": {
+                    "frontend": "",
+                    "backend": "",
+                    "database": ""
+                }
             }
 
             return state
@@ -69,17 +74,36 @@ Business Analysis:
 Product Plan:
 {state.product}
 
+Recommend a modern, scalable, production-ready architecture.
+Recommend technologies that are practical, modern, scalable, and appropriate for the startup's budget and complexity. Avoid unnecessary technologies.
 Return ONLY valid JSON in the following format:
 
 {{
-    "technical_required": true,
-    "tech_stack": ["..."],
-    "architecture": ["..."],
-    "database": ["..."],
-    "apis": ["..."],
-    "deployment": ["..."],
-    "security": ["..."],
-    "scalability": ["..."]
+  "technical_required": true,
+  "reason": "",
+  "tech_stack": {{
+    "frontend": [],
+    "backend": [],
+    "database": [],
+    "ai": [],
+    "deployment": []
+  }},
+  "architecture": [],
+  "database_tables": [],
+  "apis": [
+    {{
+      "method": "",
+      "endpoint": "",
+      "purpose": ""
+    }}
+  ],
+  "security": [],
+  "scalability": [],
+  "deployment": {{
+    "frontend": "",
+    "backend": "",
+    "database": ""
+  }}
 }}
 """
 
