@@ -1,17 +1,20 @@
 from fastapi import FastAPI
 
+from app.api.business_routes import router as business_router
 from app.api.routes import router
+
 
 app = FastAPI(
     title="AI Startup Assistant",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 app.include_router(router)
+app.include_router(business_router)
 
 
 @app.get("/")
 def root():
     return {
-        "message": "Backend Running "
+        "message": "Backend Running"
     }
