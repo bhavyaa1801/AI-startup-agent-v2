@@ -4,54 +4,64 @@ from app.models.state import WorkflowState
 
 class FinanceAgent(BaseAgent):
     """
-    Generates a financial blueprint for a startup including budget,
-    costs, revenue model, funding strategy, and financial risks.
+    Generates the financial plan for the startup.
     """
+
+    def __init__(self, gemini):
+        self.gemini = gemini
 
     def run(self, state: WorkflowState) -> WorkflowState:
 
-        state.finance = {
-            "estimated_budget": {
-                "development": "₹4,00,000",
-                "marketing": "₹1,50,000",
-                "operations": "₹50,000",
-                "legal_and_registration": "₹30,000",
-            },
+        prompt = f"""
+You are a Senior Startup Finance Consultant.
 
-            "monthly_operating_cost": {
-                "hosting": "₹8,000",
-                "database": "₹2,000",
-                "ai_api": "₹10,000",
-                "maintenance": "₹5,000"
-            },
+Analyze the following startup and prepare a complete financial plan.
 
-            "revenue_model": [
-                "Freemium",
-                "Premium Subscription",
-                "Enterprise Licensing",
-            ],
+Startup Idea:
+{state.idea}
 
-            "funding_strategy": [
-                "Bootstrapping",
-                "Angel Investors",
-                "Government Startup Grants",
-                "Venture Capital (Future Stage)",
-            ],
+Industry:
+{state.industry}
 
-            "break_even": "12-18 months",
+Target Region:
+{state.target_region}
 
-            "financial_risks": [
-                "High AI API costs",
-                "Low customer conversion",
-                "Competitive SaaS market",
-                "Changing customer requirements",
-            ],
+Business Analysis:
+{state.business}
 
-            "financial_metrics": {
-                "expected_gross_margin": "65-75%",
-                "target_customers_first_year": "500+",
-                "expected_roi": "18-24 months",
-            },
-        }
+Product Plan:
+{state.product}
+
+Technical Plan:
+{state.technical}
+
+Return ONLY valid JSON in the following format:
+
+{{
+    "estimated_budget": {{
+        "development": "",
+        "marketing": "",
+        "operations": "",
+        "legal": ""
+    }},
+    "monthly_operating_cost": {{
+        "hosting": "",
+        "database": "",
+        "ai_api": "",
+        "maintenance": ""
+    }},
+    "revenue_model": [],
+    "funding_strategy": [],
+    "break_even": "",
+    "financial_risks": [],
+    "financial_metrics": {{
+        "expected_roi": "",
+        "gross_margin": "",
+        "first_year_customers": ""
+    }}
+}}
+"""
+
+        state.finance = self.gemini.generate(prompt)
 
         return state
