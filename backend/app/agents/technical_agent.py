@@ -1,5 +1,8 @@
 from app.agents.base import BaseAgent
 from app.models.state import WorkflowState
+from app.models.ai_schemas import TechnicalOutput
+
+from app.services.groq import groq
 
 
 class TechnicalAgent(BaseAgent):
@@ -20,37 +23,33 @@ class TechnicalAgent(BaseAgent):
         "grocery",
     ]
 
-    def __init__(self, gemini):
-        self.gemini = gemini
-
     def run(self, state: WorkflowState) -> WorkflowState:
 
         idea = state.idea.lower()
 
-        # Businesses that don't require custom software
         if any(keyword in idea for keyword in self.NON_TECH_KEYWORDS):
 
-            state.technical = {
-                "technical_required": False,
-                "reason": "This business can operate efficiently using existing software solutions without building a custom application.",
-                "tech_stack": {
+            state.technical = TechnicalOutput(
+                technical_required=False,
+                reason="This business can operate efficiently using existing software solutions without building a custom application.",
+                tech_stack={
                     "frontend": [],
                     "backend": [],
                     "database": [],
                     "ai": [],
                     "deployment": []
                 },
-                "architecture": [],
-                "database_tables": [],
-                "apis": [],
-                "security": [],
-                "scalability": [],
-                "deployment": {
+                architecture=[],
+                database_tables=[],
+                apis=[],
+                security=[],
+                scalability=[],
+                deployment={
                     "frontend": "",
                     "backend": "",
                     "database": ""
                 }
-            }
+            ).model_dump()
 
             return state
 
@@ -75,7 +74,11 @@ Product Plan:
 {state.product}
 
 Recommend a modern, scalable, production-ready architecture.
-Recommend technologies that are practical, modern, scalable, and appropriate for the startup's budget and complexity. Avoid unnecessary technologies.
+
+Recommend technologies that are practical, scalable, and appropriate for the startup's budget and complexity.
+
+Do not include markdown, explanations, comments, or code fences.
+
 Return ONLY valid JSON in the following format:
 
 {{
@@ -107,6 +110,10 @@ Return ONLY valid JSON in the following format:
 }}
 """
 
-        state.technical = self.gemini.generate(prompt)
+        response = groq.generate(prompt)
+
+        technical = TechnicalOutput(**response)
+
+        state.technical = technical.model_dump()
 
         return state

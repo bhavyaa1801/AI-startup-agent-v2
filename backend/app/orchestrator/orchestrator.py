@@ -6,7 +6,6 @@ from app.agents.planner_agent import PlannerAgent
 
 from app.models.state import WorkflowState
 
-from app.services.groq import groq
 
 class StartupOrchestrator:
     """
@@ -14,7 +13,6 @@ class StartupOrchestrator:
     """
 
     def __init__(self):
-        groq = GroqService()
         self.agents = [
             BusinessAgent(),
             ProductAgent(),
@@ -27,10 +25,12 @@ class StartupOrchestrator:
 
         for agent in self.agents:
 
+            print(f"\n{'=' * 50}")
             print(f"Running {agent.__class__.__name__}")
+            print(f"{'=' * 50}")
 
             state = agent.run(state)
 
-            print(f"{agent.__class__.__name__} completed")
+            print(f"✓ {agent.__class__.__name__} completed")
 
         return state
