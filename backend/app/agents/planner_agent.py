@@ -1,16 +1,17 @@
 from app.agents.base import BaseAgent
 from app.models.state import WorkflowState
+from app.services.groq import groq
 
 
 class PlannerAgent(BaseAgent):
 
     def run(self, state: WorkflowState) -> WorkflowState:
-
+        
         data = self._collect_inputs(state)
 
-        planner_output = self._generate_plan(data)
+        #planner_output = self._generate_plan(data)
 
-        # planner_output = self._generate_plan_ai(data)
+        planner_output = self._generate_plan_ai(data)
 
         state.planner = planner_output
 
@@ -58,7 +59,29 @@ Technical Analysis:
 Financial Analysis:
 {data['finance']}
 
-Generate a complete startup execution blueprint in JSON format.
+Using all of the information above, generate a comprehensive startup execution blueprint.
+
+Return ONLY valid JSON.
+
+The JSON must contain the following keys exactly:
+
+- executive_summary
+- business_summary
+- product_summary
+- technical_summary
+- financial_summary
+- execution_roadmap
+- milestones
+- priority_tasks
+- go_to_market_plan
+- risk_analysis
+- success_metrics
+- scaling_strategy
+- final_recommendations
+
+Do not include markdown.
+Do not include explanations.
+Return only JSON.
 """
 
     # -----------------------------------------------------
@@ -266,13 +289,8 @@ Generate a complete startup execution blueprint in JSON format.
 
     def _generate_plan_ai(self, data: dict) -> dict:
         """
-        Placeholder for Grok integration.
+        Generates the startup execution blueprint using the Groq service.
         """
         prompt = self._build_prompt(data)
-
-        # response = self.grok.generate_json(prompt)
-
-        return {
-            "message": "AI integration not enabled yet.",
-            "generated_prompt": prompt,
-        }
+         
+        return groq.generate(prompt)
