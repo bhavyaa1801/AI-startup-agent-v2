@@ -5,9 +5,8 @@ from app.agents.finance_agent import FinanceAgent
 from app.agents.planner_agent import PlannerAgent
 
 from app.models.state import WorkflowState
-from app.services.gemini import GeminiService
 
-
+from app.services.groq import groq
 
 class StartupOrchestrator:
     """
@@ -15,7 +14,7 @@ class StartupOrchestrator:
     """
 
     def __init__(self):
-        gemini = GeminiService()
+        groq = GroqService()
         self.agents = [
             BusinessAgent(),
             ProductAgent(),

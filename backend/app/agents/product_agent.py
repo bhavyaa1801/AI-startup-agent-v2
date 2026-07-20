@@ -1,8 +1,7 @@
 from app.prompts.product_prompt import build_product_prompt
-from app.services.gemini import gemini
 from app.models.ai_schemas import ProductOutput
 
-
+from app.services.groq import groq
 class ProductAgent:
 
     def run(self, state):
@@ -12,10 +11,9 @@ class ProductAgent:
             state.business
         )
 
-        product = gemini.generate(
-            prompt,
-            ProductOutput
-        )
+        response = groq.generate(prompt)
+
+        product = ProductOutput(**response)
         state.product = product
 
         return state
