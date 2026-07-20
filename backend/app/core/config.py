@@ -5,8 +5,8 @@ load_dotenv()
 
 
 class Settings:
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-    MODEL_NAME = "gemini-3.5-flash"
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+    MODEL_NAME = "llama-3.3-70b-versatile"
 
 
 settings = Settings()
