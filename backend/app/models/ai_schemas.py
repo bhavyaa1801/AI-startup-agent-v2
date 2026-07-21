@@ -74,3 +74,32 @@ class TechnicalOutput(BaseModel):
     scalability: list[str]
 
     deployment: Deployment
+    
+class EstimatedBudget(BaseModel):
+    development: str
+    marketing: str
+    operations: str
+    legal_and_registration: str
+
+
+class MonthlyOperatingCost(BaseModel):
+    hosting: str
+    database: str
+    ai_api: str
+    maintenance: str
+
+
+class FinancialMetrics(BaseModel):
+    expected_gross_margin: str
+    target_customers_first_year: str
+    expected_roi: str
+
+
+class FinanceOutput(BaseModel):
+    estimated_budget: EstimatedBudget
+    monthly_operating_cost: MonthlyOperatingCost
+    revenue_model: list[str]
+    funding_strategy: list[str]
+    break_even: str
+    financial_risks: list[str]
+    financial_metrics: FinancialMetrics
