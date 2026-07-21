@@ -4,31 +4,20 @@ from typing import Any
 
 from app.agents.base import BaseAgent
 from app.models.state import WorkflowState
+from app.services.groq import groq
 
 
 class BusinessAgent(BaseAgent):
     """
-    Produces a deterministic business and market research report.
-
-    This version does not call Gemini, Tavily, Google Search,
-    databases, or any other external API.
-
-    The generated findings are hypotheses that should be validated
-    through customer interviews and real market research.
+    Produces a business and market research report using Groq API
+    (llama-3.3-70b-versatile) with fallback to deterministic hypotheses.
     """
 
     INDUSTRY_PROFILES: dict[str, dict[str, Any]] = {
         "education": {
             "keywords": [
-                "education",
-                "student",
-                "school",
-                "college",
-                "teacher",
-                "learning",
-                "course",
-                "edtech",
-                "training",
+                "education", "student", "school", "college", "teacher",
+                "learning", "course", "edtech", "training",
             ],
             "customer_segments": [
                 "Students and independent learners",
@@ -68,16 +57,8 @@ class BusinessAgent(BaseAgent):
         },
         "healthcare": {
             "keywords": [
-                "health",
-                "healthcare",
-                "medical",
-                "doctor",
-                "patient",
-                "clinic",
-                "hospital",
-                "wellness",
-                "fitness",
-                "pharmacy",
+                "health", "healthcare", "medical", "doctor", "patient",
+                "clinic", "hospital", "wellness", "fitness", "pharmacy",
             ],
             "customer_segments": [
                 "Patients and caregivers",
@@ -117,17 +98,8 @@ class BusinessAgent(BaseAgent):
         },
         "retail": {
             "keywords": [
-                "retail",
-                "shop",
-                "store",
-                "ecommerce",
-                "e-commerce",
-                "shopping",
-                "inventory",
-                "seller",
-                "merchant",
-                "fashion",
-                "clothing",
+                "retail", "shop", "store", "ecommerce", "e-commerce",
+                "shopping", "inventory", "seller", "merchant", "fashion", "clothing",
             ],
             "customer_segments": [
                 "Individual online shoppers",
@@ -167,15 +139,8 @@ class BusinessAgent(BaseAgent):
         },
         "finance": {
             "keywords": [
-                "finance",
-                "financial",
-                "fintech",
-                "payment",
-                "bank",
-                "loan",
-                "investment",
-                "insurance",
-                "accounting",
+                "finance", "financial", "fintech", "payment", "bank",
+                "loan", "investment", "insurance", "accounting",
             ],
             "customer_segments": [
                 "Individual consumers",
@@ -215,16 +180,8 @@ class BusinessAgent(BaseAgent):
         },
         "food": {
             "keywords": [
-                "food",
-                "restaurant",
-                "cafe",
-                "coffee",
-                "bakery",
-                "kitchen",
-                "meal",
-                "grocery",
-                "delivery",
-                "hospitality",
+                "food", "restaurant", "cafe", "coffee", "bakery",
+                "kitchen", "meal", "grocery", "delivery", "hospitality",
             ],
             "customer_segments": [
                 "Local consumers",
@@ -264,16 +221,8 @@ class BusinessAgent(BaseAgent):
         },
         "technology": {
             "keywords": [
-                "software",
-                "saas",
-                "technology",
-                "platform",
-                "application",
-                "app",
-                "ai",
-                "automation",
-                "digital",
-                "cloud",
+                "software", "saas", "technology", "platform", "application",
+                "app", "ai", "automation", "digital", "cloud",
             ],
             "customer_segments": [
                 "Individual digital users",
@@ -351,14 +300,10 @@ class BusinessAgent(BaseAgent):
         ],
     }
 
-    def run(
-        self,
-        state: WorkflowState,
-    ) -> WorkflowState:
+    def run(self, state: WorkflowState) -> WorkflowState:
         """
-        Analyse the startup idea and update only state.business.
+        Analyse the startup idea using Groq API and update state.business.
         """
-
         idea = self._clean_text(state.idea)
 
         if len(idea) < 10:
@@ -366,37 +311,123 @@ class BusinessAgent(BaseAgent):
                 "The startup idea must contain at least 10 characters."
             )
 
-        industry = self._clean_optional(
-            state.industry
-        )
+        industry = self._clean_optional(state.industry)
+        region = self._clean_optional(state.target_region)
 
-        region = self._clean_optional(
-            state.target_region
-        )
+        # Attempt Groq Generation
+        try:
+            groq_response = self._call_groq_api(idea=idea, industry=industry, region=region)
+            state.business = groq_response
+        except Exception as e:
+            # Fallback to local rule-based evaluation if API call fails
+            state.business = self._generate_fallback(idea=idea, industry=industry, region=region, error=str(e))
 
-        profile_name, profile = self._select_profile(
-            idea=idea,
-            industry=industry,
-        )
+        return state
 
-        business_model = self._infer_business_model(
-            idea=idea,
-            profile_name=profile_name,
-        )
+    def _call_groq_api(self, idea: str, industry: str | None, region: str | None) -> dict[str, Any]:
+        prompt = f"""
+        You are a expert Business and Market Research AI Agent.
+        Analyse the following startup idea and generate a structured JSON market research report.
 
-        input_score = self._calculate_input_score(
-            idea=idea,
-            industry=industry,
-            region=region,
-        )
+        STARTUP IDEA: {idea}
+        INDUSTRY: {industry or "Not specified"}
+        TARGET REGION: {region or "Global"}
 
-        state.business = {
+        Return strictly a valid JSON object matching this structure:
+        {{
+            "agent": {{
+                "name": "Business and Market Research Agent",
+                "version": "2.0.0-groq",
+                "mode": "live_groq_llm",
+                "uses_external_api": true,
+                "uses_live_market_data": false
+            }},
+            "input_summary": {{
+                "idea": "{idea}",
+                "industry_provided": "{industry or 'Not provided'}",
+                "inferred_industry_profile": "AI generated",
+                "target_region": "{region or 'Global'}"
+            }},
+            "executive_summary": "A detailed executive summary paragraph evaluating the idea.",
+            "market_research": {{
+                "research_status": "ai_generated_hypotheses",
+                "market_definition": "Target market definition sentence.",
+                "market_size": {{
+                    "tam": "Estimated TAM or Qualitative Description",
+                    "sam": "Estimated SAM or Qualitative Description",
+                    "som": "Estimated SOM or Qualitative Description",
+                    "status": "Qualitative estimates generated via Llama-3.3-70B model."
+                }},
+                "demand_hypotheses": ["hypothesis 1", "hypothesis 2", "hypothesis 3"],
+                "questions_requiring_research": ["question 1", "question 2", "question 3"]
+            }},
+            "target_customer_analysis": {{
+                "possible_segments": ["segment 1", "segment 2", "segment 3"],
+                "recommended_early_adopter": "Description of ideal early adopter.",
+                "customer_interview_questions": ["question 1", "question 2", "question 3"]
+            }},
+            "competitor_analysis": {{
+                "named_competitors": ["competitor 1", "competitor 2"],
+                "competitor_categories": ["category 1", "category 2"],
+                "research_status": "AI suggested competitors.",
+                "comparison_criteria": ["Criteria 1", "Criteria 2"]
+            }},
+            "business_model": {{
+                "recommended_model": "Recommended business model",
+                "alternative_models": ["model 1", "model 2"],
+                "pricing_status": "Pricing strategy recommendation",
+                "possible_acquisition_channels": ["channel 1", "channel 2"]
+            }},
+            "swot_analysis": {{
+                "strengths": ["strength 1", "strength 2"],
+                "weaknesses": ["weakness 1", "weakness 2"],
+                "opportunities": ["opportunity 1", "opportunity 2"],
+                "threats": ["threat 1", "threat 2"]
+            }},
+            "validation": {{
+                "input_completeness_score": 85,
+                "score_explanation": "Completeness score explanation",
+                "experiments": [
+                    {{
+                        "name": "Experiment 1",
+                        "target": "Target objective",
+                        "success_signal": "Success criteria"
+                    }}
+                ]
+            }},
+            "risks": [
+                {{
+                    "risk": "Risk description",
+                    "severity": "High / Medium / Low",
+                    "mitigation": "Mitigation strategy"
+                }}
+            ],
+            "recommendation": {{
+                "decision": "validate_before_building",
+                "reason": "Reason for decision",
+                "next_steps": ["step 1", "step 2", "step 3"]
+            }},
+            "limitations": [
+                "Generated using Llama 3.3 70B via Groq.",
+                "Market data requires empirical validation."
+            ]
+        }}
+        """
+        return groq.generate(prompt)
+
+    def _generate_fallback(self, idea: str, industry: str | None, region: str | None, error: str) -> dict[str, Any]:
+        profile_name, profile = self._select_profile(idea=idea, industry=industry)
+        business_model = self._infer_business_model(idea=idea, profile_name=profile_name)
+        input_score = self._calculate_input_score(idea=idea, industry=industry, region=region)
+
+        return {
             "agent": {
                 "name": "Business and Market Research Agent",
-                "version": "1.0.0-local",
-                "mode": "deterministic_no_api",
+                "version": "1.0.0-fallback",
+                "mode": "deterministic_fallback",
                 "uses_external_api": False,
                 "uses_live_market_data": False,
+                "api_error": error,
             },
             "input_summary": {
                 "idea": idea,
@@ -406,432 +437,110 @@ class BusinessAgent(BaseAgent):
             },
             "executive_summary": (
                 f"The proposed startup idea is: {idea}. "
-                f"It has been evaluated using the {profile_name} "
-                "local business-research profile. The findings are "
-                "hypotheses and require customer and market validation "
-                "before important business decisions are made."
+                f"Evaluated using the fallback {profile_name} profile."
             ),
             "market_research": {
                 "research_status": "hypothesis_based",
-                "market_definition": (
-                    f"Potential {profile_name} customers in "
-                    f"{region or 'the selected launch region'} who "
-                    "experience the problem described by the idea."
-                ),
+                "market_definition": f"Potential {profile_name} customers in {region or 'selected region'}.",
                 "market_size": {
-                    "tam": None,
-                    "sam": None,
-                    "som": None,
-                    "status": (
-                        "Not calculated because no verified external "
-                        "market-data source is connected."
-                    ),
+                    "tam": None, "sam": None, "som": None,
+                    "status": "Not calculated in fallback mode.",
                 },
-                "demand_hypotheses": deepcopy(
-                    profile["demand_hypotheses"]
-                ),
+                "demand_hypotheses": deepcopy(profile["demand_hypotheses"]),
                 "questions_requiring_research": [
-                    (
-                        "How many target customers experience "
-                        "this problem?"
-                    ),
-                    (
-                        "How frequently does the problem occur?"
-                    ),
-                    (
-                        "What do customers currently spend "
-                        "on alternatives?"
-                    ),
-                    (
-                        "What percentage of customers would "
-                        "consider switching?"
-                    ),
-                    (
-                        "Which regional regulations affect "
-                        "this business?"
-                    ),
+                    "How many target customers experience this problem?",
+                    "How frequently does the problem occur?",
                 ],
             },
             "target_customer_analysis": {
-                "possible_segments": deepcopy(
-                    profile["customer_segments"]
-                ),
-                "recommended_early_adopter": (
-                    "Customers who experience the problem frequently, "
-                    "currently use an inconvenient alternative, and "
-                    "can make a purchase decision without a long "
-                    "approval process."
-                ),
-                "customer_interview_questions": [
-                    (
-                        "When did you last experience "
-                        "this problem?"
-                    ),
-                    (
-                        "How do you solve this problem today?"
-                    ),
-                    (
-                        "How much time or money does the "
-                        "current solution cost?"
-                    ),
-                    (
-                        "What is the biggest weakness of "
-                        "the current solution?"
-                    ),
-                    (
-                        "Would you pay for a better solution? "
-                        "Why or why not?"
-                    ),
-                ],
+                "possible_segments": deepcopy(profile["customer_segments"]),
+                "recommended_early_adopter": "Early adopters with urgent needs.",
+                "customer_interview_questions": ["When did you last experience this problem?"],
             },
             "competitor_analysis": {
                 "named_competitors": [],
-                "competitor_categories": deepcopy(
-                    profile["competitor_categories"]
-                ),
-                "research_status": (
-                    "Named competitors require live web research "
-                    "or documented manual competitor research."
-                ),
-                "comparison_criteria": [
-                    "Target customer",
-                    "Problem solved",
-                    "Core features",
-                    "Pricing",
-                    "Distribution channel",
-                    "Strengths",
-                    "Weaknesses",
-                    "Customer reviews",
-                ],
+                "competitor_categories": deepcopy(profile["competitor_categories"]),
+                "research_status": "Fallback mode.",
+                "comparison_criteria": ["Target customer", "Pricing"],
             },
             "business_model": {
                 "recommended_model": business_model,
-                "alternative_models": deepcopy(
-                    profile["revenue_models"]
-                ),
-                "pricing_status": (
-                    "Pricing must be tested through interviews, "
-                    "pre-orders, paid pilots, or landing-page tests."
-                ),
-                "possible_acquisition_channels": deepcopy(
-                    profile["channels"]
-                ),
+                "alternative_models": deepcopy(profile["revenue_models"]),
+                "pricing_status": "To be tested.",
+                "possible_acquisition_channels": deepcopy(profile["channels"]),
             },
             "swot_analysis": {
-                "strengths": [
-                    (
-                        "The concept can be tested before "
-                        "full development."
-                    ),
-                    (
-                        "Founder-led interviews can produce "
-                        "early evidence."
-                    ),
-                    (
-                        "A focused MVP can reduce initial "
-                        "execution risk."
-                    ),
-                ],
-                "weaknesses": [
-                    (
-                        "No verified customer evidence is "
-                        "currently available."
-                    ),
-                    (
-                        "No reliable market-size data is connected."
-                    ),
-                    (
-                        "No named competitor research has "
-                        "been completed."
-                    ),
-                ],
-                "opportunities": [
-                    (
-                        "Focus on one narrowly defined "
-                        "early-adopter segment."
-                    ),
-                    (
-                        "Validate willingness to pay before "
-                        "building the full product."
-                    ),
-                    (
-                        "Differentiate through a specific "
-                        "measurable outcome."
-                    ),
-                ],
-                "threats": deepcopy(
-                    profile["risks"]
-                ),
+                "strengths": ["Fast concept validation."],
+                "weaknesses": ["No external verification."],
+                "opportunities": ["Focus on niche customer segment."],
+                "threats": deepcopy(profile["risks"]),
             },
             "validation": {
                 "input_completeness_score": input_score,
-                "score_explanation": (
-                    "This score measures only how complete the "
-                    "submitted idea, industry, and target region are. "
-                    "It is not a market-viability, financial, or "
-                    "investment score."
-                ),
+                "score_explanation": "Calculated based on input length.",
                 "experiments": [
                     {
                         "name": "Customer interviews",
-                        "target": (
-                            "Interview at least 15 potential customers."
-                        ),
-                        "success_signal": (
-                            "At least 8 customers independently "
-                            "describe the same problem without "
-                            "being led."
-                        ),
-                    },
-                    {
-                        "name": "Landing-page test",
-                        "target": (
-                            "Present one customer segment with "
-                            "one clear value proposition."
-                        ),
-                        "success_signal": (
-                            "Qualified visitors submit their contact "
-                            "details or request early access."
-                        ),
-                    },
-                    {
-                        "name": "Pricing test",
-                        "target": (
-                            "Present three realistic price options "
-                            "to qualified prospects."
-                        ),
-                        "success_signal": (
-                            "Prospects accept a paid pilot, deposit, "
-                            "or written purchase commitment."
-                        ),
-                    },
-                    {
-                        "name": "Manual MVP",
-                        "target": (
-                            "Deliver the core result manually before "
-                            "building complete software."
-                        ),
-                        "success_signal": (
-                            "Customers repeatedly use the service "
-                            "and report measurable value."
-                        ),
-                    },
+                        "target": "Interview 15 customers.",
+                        "success_signal": "8 confirm the problem.",
+                    }
                 ],
             },
             "risks": [
                 {
                     "risk": risk,
                     "severity": "Requires validation",
-                    "mitigation": (
-                        "Test this risk using customer interviews, "
-                        "small experiments, and documented evidence."
-                    ),
+                    "mitigation": "Test via interviews.",
                 }
                 for risk in profile["risks"]
             ],
             "recommendation": {
                 "decision": "validate_before_building",
-                "reason": (
-                    "The available input is sufficient to define "
-                    "validation experiments, but it is not sufficient "
-                    "to prove market demand."
-                ),
-                "next_steps": [
-                    "Select one primary customer segment.",
-                    "Conduct at least 15 customer interviews.",
-                    (
-                        "Document existing alternatives and "
-                        "customer complaints."
-                    ),
-                    "Test willingness to pay.",
-                    "Build a small manual or no-code MVP.",
-                    (
-                        "Add verified market and competitor "
-                        "sources later."
-                    ),
-                ],
+                "reason": "Fallback mode generated.",
+                "next_steps": ["Conduct customer interviews."],
             },
             "limitations": [
-                "No live web search was performed.",
-                "No API or external database was used.",
-                "No market figures were verified.",
-                "No named competitors were invented.",
-                (
-                    "The output is a planning aid and not "
-                    "investment advice."
-                ),
+                "Groq API call failed or missing API Key.",
+                "Using local rule-based fallback.",
             ],
         }
 
-        return state
-
-    def _select_profile(
-        self,
-        idea: str,
-        industry: str | None,
-    ) -> tuple[str, dict[str, Any]]:
-        """
-        Select the most suitable local industry profile.
-        """
-
-        searchable_text = (
-            f"{idea} {industry or ''}"
-        ).lower()
-
-        for profile_name, profile in (
-            self.INDUSTRY_PROFILES.items()
-        ):
-            if any(
-                self._contains_keyword(
-                    text=searchable_text,
-                    keyword=keyword,
-                )
-                for keyword in profile["keywords"]
-            ):
+    def _select_profile(self, idea: str, industry: str | None) -> tuple[str, dict[str, Any]]:
+        searchable_text = f"{idea} {industry or ''}".lower()
+        for profile_name, profile in self.INDUSTRY_PROFILES.items():
+            if any(self._contains_keyword(text=searchable_text, keyword=kw) for kw in profile["keywords"]):
                 return profile_name, profile
-
         return "general business", self.DEFAULT_PROFILE
 
-    def _contains_keyword(
-        self,
-        text: str,
-        keyword: str,
-    ) -> bool:
-        """
-        Match a complete word or phrase.
+    def _contains_keyword(self, text: str, keyword: str) -> bool:
+        pattern = r"(?<!\w)" + re.escape(keyword.lower()) + r"(?!\w)"
+        return re.search(pattern, text.lower()) is not None
 
-        This prevents:
-        - 'health' from incorrectly matching 'healthy'
-        - 'ai' from incorrectly matching 'retail'
-        - 'app' from incorrectly matching unrelated longer words
-        """
-
-        pattern = (
-            r"(?<!\w)"
-            + re.escape(keyword.lower())
-            + r"(?!\w)"
-        )
-
-        return (
-            re.search(
-                pattern,
-                text.lower(),
-            )
-            is not None
-        )
-
-    def _infer_business_model(
-        self,
-        idea: str,
-        profile_name: str,
-    ) -> str:
-        """
-        Infer a possible business model from the submitted idea.
-        """
-
+    def _infer_business_model(self, idea: str, profile_name: str) -> str:
         idea_lower = idea.lower()
-
-        if any(
-            self._contains_keyword(
-                text=idea_lower,
-                keyword=keyword,
-            )
-            for keyword in [
-                "marketplace",
-                "connect buyers",
-                "connect sellers",
-            ]
-        ):
+        if any(self._contains_keyword(text=idea_lower, keyword=kw) for kw in ["marketplace", "connect buyers", "connect sellers"]):
             return "Marketplace commission model"
-
-        if any(
-            self._contains_keyword(
-                text=idea_lower,
-                keyword=keyword,
-            )
-            for keyword in [
-                "saas",
-                "software",
-                "platform",
-                "app",
-                "automation",
-            ]
-        ):
+        if any(self._contains_keyword(text=idea_lower, keyword=kw) for kw in ["saas", "software", "platform", "app", "automation"]):
             return "Subscription or usage-based software model"
-
-        if any(
-            self._contains_keyword(
-                text=idea_lower,
-                keyword=keyword,
-            )
-            for keyword in [
-                "store",
-                "shop",
-                "product",
-                "ecommerce",
-                "e-commerce",
-            ]
-        ):
+        if any(self._contains_keyword(text=idea_lower, keyword=kw) for kw in ["store", "shop", "product", "ecommerce", "e-commerce"]):
             return "Product sales or transaction-margin model"
-
         if profile_name == "food":
-            return (
-                "Direct sales with optional delivery "
-                "or subscription"
-            )
+            return "Direct sales with optional delivery or subscription"
+        return "Start with paid pilots, then select a repeatable revenue model"
 
-        return (
-            "Start with paid pilots, then select "
-            "a repeatable revenue model"
-        )
-
-    def _calculate_input_score(
-        self,
-        idea: str,
-        industry: str | None,
-        region: str | None,
-    ) -> int:
-        """
-        Calculate input completeness, not market viability.
-        """
-
+    def _calculate_input_score(self, idea: str, industry: str | None, region: str | None) -> int:
         score = 35
-
-        if len(idea) >= 30:
-            score += 10
-
-        if len(idea) >= 80:
-            score += 10
-
-        if industry:
-            score += 15
-
-        if region:
-            score += 15
-
+        if len(idea) >= 30: score += 10
+        if len(idea) >= 80: score += 10
+        if industry: score += 15
+        if region: score += 15
         return min(score, 85)
 
-    def _clean_text(
-        self,
-        value: str,
-    ) -> str:
-        """
-        Remove unnecessary spaces from required text.
-        """
-
+    def _clean_text(self, value: str) -> str:
         return " ".join(value.split())
 
-    def _clean_optional(
-        self,
-        value: str | None,
-    ) -> str | None:
-        """
-        Clean optional text and convert empty text to None.
-        """
-
+    def _clean_optional(self, value: str | None) -> str | None:
         if value is None:
             return None
-
         cleaned = self._clean_text(value)
-
         return cleaned or None
