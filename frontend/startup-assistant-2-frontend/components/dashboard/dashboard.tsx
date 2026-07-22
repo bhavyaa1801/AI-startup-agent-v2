@@ -13,6 +13,7 @@ import { useTheme } from "@/components/theme-provider"
 import { AGENTS, type AgentId } from "@/lib/blueprint-data"
 
 interface DashboardProps {
+  blueprint: any
   onReset: () => void
 }
 
@@ -23,12 +24,15 @@ const HERO_STATS = [
   { label: "MRR @ M18", value: "$79K" },
 ]
 
-export function Dashboard({ onReset }: DashboardProps) {
+export function Dashboard({ blueprint, onReset, }: DashboardProps) {
   const [active, setActive] = useState<AgentId>("business")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { theme, toggle } = useTheme()
 
   const agent = AGENTS.find((a) => a.id === active)!
+  if (!blueprint) {
+    return null
+  }
 
   return (
     <div className="flex min-h-dvh">
@@ -106,14 +110,15 @@ export function Dashboard({ onReset }: DashboardProps) {
             <div className="relative">
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-background/40 px-3 py-1 text-xs text-muted-foreground">
                 <Sparkles className="h-3 w-3 text-accent" />
-                Blueprint generated · LaunchLoop
+                Blueprint generated
               </div>
               <h1 className="text-balance text-2xl font-bold tracking-tight md:text-3xl">
-                Your <span className="gradient-text">investor-ready</span> startup blueprint
+                {blueprint.business?.input_summary?.idea ??
+                  "Your Startup Blueprint"}
               </h1>
               <p className="mt-2 max-w-2xl text-pretty text-sm text-muted-foreground">
-                Five specialized agents analyzed your idea across business, product, technical,
-                finance, and execution. Explore each section below.
+                {blueprint.business?.executive_summary ??
+                  "Your startup blueprint has been generated successfully."}
               </p>
 
               <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -128,12 +133,39 @@ export function Dashboard({ onReset }: DashboardProps) {
           </section>
 
           {/* Active agent section */}
-          <div key={active} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {active === "business" && <BusinessSection />}
-            {active === "product" && <ProductSection />}
-            {active === "technical" && <TechnicalSection />}
-            {active === "finance" && <FinanceSection />}
-            {active === "planner" && <PlannerSection />}
+          <div
+            key={active}
+            className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+          >
+            {active === "business" && (
+              <BusinessSection
+                data={blueprint.business}
+              />
+            )}
+
+            {active === "product" && (
+              <ProductSection
+                data={blueprint.product}
+              />
+            )}
+
+            {active === "technical" && (
+              <TechnicalSection
+                data={blueprint.technical}
+              />
+            )}
+
+            {active === "finance" && (
+              <FinanceSection
+                data={blueprint.finance}
+              />
+            )}
+
+            {active === "planner" && (
+              <PlannerSection
+                data={blueprint.planner}
+              />
+            )}
           </div>
         </main>
       </div>

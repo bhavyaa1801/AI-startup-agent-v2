@@ -7,7 +7,7 @@ import { InputCard } from "@/components/input-card"
 import { AGENTS } from "@/lib/blueprint-data"
 
 interface LandingPageProps {
-  onGenerate: () => void
+  onGenerate: (data: any) => void
 }
 
 export function LandingPage({ onGenerate }: LandingPageProps) {
