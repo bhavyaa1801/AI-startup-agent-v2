@@ -14,6 +14,6 @@ class ProductAgent:
         response = groq.generate(prompt)
 
         product = ProductOutput(**response)
-        state.product = product
+        state.product = product.model_dump()
 
         return state
