@@ -19,12 +19,12 @@ app.add_middleware(
         "http://localhost:3000",
         "http://localhost:5173",
         "https://ai-startup-agent-v2.vercel.app",
+        "https://ai-startup-agent-v2-lake.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # -----------------------------
 # API Routes
 # -----------------------------
