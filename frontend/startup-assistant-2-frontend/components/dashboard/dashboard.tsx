@@ -10,7 +10,7 @@ import {
   Download,
 } from "lucide-react"
 
-import { GithubIcon } from "@/components/icons"
+
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { BusinessSection } from "@/components/dashboard/sections/business-section"
 import { ProductSection } from "@/components/dashboard/sections/product-section"
@@ -96,14 +96,7 @@ export function Dashboard({
               New
             </button>
 
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-lg p-2 hover:bg-muted"
-            >
-              <GithubIcon className="h-5 w-5" />
-            </a>
+            
 
             <button
               onClick={toggle}
@@ -160,13 +153,7 @@ export function Dashboard({
                 }
               />
 
-              <MetricCard
-                label="Decision"
-                value={
-                  blueprint.business?.recommendation
-                    ?.decision ?? "-"
-                }
-              />
+              
 
               <MetricCard
                 label="Validation"

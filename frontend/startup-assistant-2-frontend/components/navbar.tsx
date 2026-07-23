@@ -2,7 +2,7 @@
 
 import { Moon, Sun, Sparkles } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
-import { GithubIcon } from "@/components/icons"
+
 
 const NAV_LINKS = [
   { label: "Home", href: "#home" },
@@ -40,30 +40,7 @@ export function Navbar() {
           ))}
         </nav>
 
-        {/* Right: github + theme */}
-        <div className="flex items-center gap-1.5">
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noreferrer noopener"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-            aria-label="View on GitHub"
-          >
-            <GithubIcon className="h-[18px] w-[18px]" />
-          </a>
-          <button
-            type="button"
-            onClick={toggle}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-[18px] w-[18px]" />
-            ) : (
-              <Moon className="h-[18px] w-[18px]" />
-            )}
-          </button>
-        </div>
+        
       </div>
     </header>
   )
