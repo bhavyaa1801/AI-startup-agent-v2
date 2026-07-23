@@ -20,7 +20,7 @@ export default function Footer() {
             </div>
 
             <h2 className="text-2xl font-bold tracking-tight text-white">
-              AI Startup Assistant
+              VentureAI
             </h2>
 
           </div>
@@ -66,7 +66,7 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-between gap-3 text-sm text-gray-500 md:flex-row">
 
           <p>
-            © 2026 AI Startup Assistant. All rights reserved.
+            © 2026 VentureAI. All rights reserved.
           </p>
 
           <p>
