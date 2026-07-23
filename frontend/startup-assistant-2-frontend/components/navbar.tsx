@@ -23,7 +23,7 @@ export function Navbar() {
             <Sparkles className="h-4.5 w-4.5" strokeWidth={2.2} />
           </span>
           <span className="text-sm font-semibold tracking-tight md:text-base">
-            AI Startup Assistant
+            VentureAI
           </span>
         </a>
 

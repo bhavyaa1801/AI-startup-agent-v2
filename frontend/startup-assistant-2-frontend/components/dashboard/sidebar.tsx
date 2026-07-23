@@ -34,7 +34,7 @@ export function Sidebar({ active, onSelect, open, onClose }: SidebarProps) {
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-primary-foreground shadow-lg shadow-primary/30">
               <Sparkles className="h-4 w-4" />
             </span>
-            <span className="text-sm font-semibold tracking-tight">AI Startup Assistant</span>
+            <span className="text-sm font-semibold tracking-tight">VentureAI</span>
           </a>
           <button
             onClick={onClose}

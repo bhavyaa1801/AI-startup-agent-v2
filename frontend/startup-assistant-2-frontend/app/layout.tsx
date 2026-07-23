@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'AI Startup Assistant — Build Your Startup with AI Agents',
+  title: 'VentureAI — Build Your Startup with AI Agents',
   description:
     'Generate a complete, investor-ready startup blueprint using five specialized AI agents that collaborate together.',
   generator: 'v0.app',
