@@ -1,7 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Menu, Moon, Sun, RotateCcw, Sparkles, Download } from "lucide-react"
+import {
+  Menu,
+  Moon,
+  Sun,
+  RotateCcw,
+  Sparkles,
+  Download,
+} from "lucide-react"
+
 import { GithubIcon } from "@/components/icons"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { BusinessSection } from "@/components/dashboard/sections/business-section"
@@ -9,6 +17,7 @@ import { ProductSection } from "@/components/dashboard/sections/product-section"
 import { TechnicalSection } from "@/components/dashboard/sections/technical-section"
 import { FinanceSection } from "@/components/dashboard/sections/finance-section"
 import { PlannerSection } from "@/components/dashboard/sections/planner-section"
+import { MetricCard } from "@/components/dashboard/primitives"
 import { useTheme } from "@/components/theme-provider"
 import { AGENTS, type AgentId } from "@/lib/blueprint-data"
 
@@ -17,25 +26,21 @@ interface DashboardProps {
   onReset: () => void
 }
 
-const HERO_STATS = [
-  { label: "Market size", value: "$8.2B" },
-  { label: "Break-even", value: "Mo 19" },
-  { label: "Funding ask", value: "$500K" },
-  { label: "MRR @ M18", value: "$79K" },
-]
-
-export function Dashboard({ blueprint, onReset, }: DashboardProps) {
+export function Dashboard({
+  blueprint,
+  onReset,
+}: DashboardProps) {
   const [active, setActive] = useState<AgentId>("business")
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
   const { theme, toggle } = useTheme()
 
   const agent = AGENTS.find((a) => a.id === active)!
-  if (!blueprint) {
-    return null
-  }
+
+  if (!blueprint) return null
 
   return (
-    <div className="flex min-h-dvh">
+    <div className="flex min-h-screen bg-background">
       <Sidebar
         active={active}
         onSelect={setActive}
@@ -43,130 +48,161 @@ export function Dashboard({ blueprint, onReset, }: DashboardProps) {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Topbar */}
-        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border glass px-4 py-3 md:px-6">
+      <div className="flex flex-1 flex-col min-w-0">
+
+        {/* ================= TOP BAR ================= */}
+
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur px-6 py-3">
+
           <div className="flex items-center gap-3">
+
             <button
               onClick={() => setSidebarOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-foreground/5 lg:hidden"
-              aria-label="Open sidebar"
+              className="lg:hidden"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <div className="flex items-center gap-2.5">
-              <span
-                className="flex h-8 w-8 items-center justify-center rounded-lg"
-                style={{
-                  background: `color-mix(in oklab, ${agent.accent} 18%, transparent)`,
-                  color: agent.accent,
-                }}
-              >
-                <agent.icon className="h-4 w-4" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold leading-tight">{agent.name}</p>
-                <p className="hidden text-xs text-muted-foreground sm:block">{agent.tagline}</p>
-              </div>
+
+            <span
+              className="flex h-9 w-9 items-center justify-center rounded-lg"
+              style={{
+                background: `color-mix(in oklab, ${agent.accent} 18%, transparent)`,
+                color: agent.accent,
+              }}
+            >
+              <agent.icon className="h-4 w-4" />
+            </span>
+
+            <div>
+              <h2 className="font-semibold">{agent.name}</h2>
+              <p className="text-xs text-muted-foreground">
+                {agent.tagline}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <button className="hidden items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5 sm:flex">
-              <Download className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-2">
+
+            <button className="hidden sm:flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-muted">
+              <Download className="h-4 w-4" />
               Export
             </button>
+
             <button
               onClick={onReset}
-              className="flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-xs font-medium text-foreground transition-colors hover:bg-foreground/5"
+              className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-muted"
             >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">New</span>
+              <RotateCcw className="h-4 w-4" />
+              New
             </button>
+
             <a
               href="https://github.com"
               target="_blank"
-              rel="noreferrer noopener"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-foreground/5"
-              aria-label="GitHub"
+              rel="noreferrer"
+              className="rounded-lg p-2 hover:bg-muted"
             >
-              <GithubIcon className="h-[18px] w-[18px]" />
+              <GithubIcon className="h-5 w-5" />
             </a>
+
             <button
               onClick={toggle}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-foreground/5"
-              aria-label="Toggle theme"
+              className="rounded-lg p-2 hover:bg-muted"
             >
-              {theme === "dark" ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+              {theme === "dark"
+                ? <Sun className="h-5 w-5" />
+                : <Moon className="h-5 w-5" />}
             </button>
+
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-6 md:px-6 md:py-8">
-          {/* Summary hero */}
-          <section className="relative mb-6 overflow-hidden rounded-3xl gradient-border glass p-6 md:p-8">
-            <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
-            <div className="relative">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-background/40 px-3 py-1 text-xs text-muted-foreground">
-                <Sparkles className="h-3 w-3 text-accent" />
-                Blueprint generated
-              </div>
-              <h1 className="text-balance text-2xl font-bold tracking-tight md:text-3xl">
-                {blueprint.business?.input_summary?.idea ??
-                  "Your Startup Blueprint"}
-              </h1>
-              <p className="mt-2 max-w-2xl text-pretty text-sm text-muted-foreground">
-                {blueprint.business?.executive_summary ??
-                  "Your startup blueprint has been generated successfully."}
-              </p>
+        {/* ================= MAIN ================= */}
 
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {HERO_STATS.map((s) => (
-                  <div key={s.label} className="rounded-2xl border border-border bg-background/40 p-3.5">
-                    <p className="text-xs text-muted-foreground">{s.label}</p>
-                    <p className="mt-1 text-xl font-semibold tracking-tight">{s.value}</p>
-                  </div>
-                ))}
-              </div>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
+
+          {/* ================= HERO ================= */}
+
+          <section className="mb-8 rounded-3xl border border-border bg-card p-8">
+
+            <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground">
+              <Sparkles className="h-3 w-3" />
+              Blueprint Generated
             </div>
+
+            <h1 className="mt-4 text-4xl font-bold">
+              {blueprint.business?.input_summary?.idea ??
+                "Startup Blueprint"}
+            </h1>
+
+            <p className="mt-3 max-w-3xl text-muted-foreground">
+              {blueprint.business?.executive_summary ??
+                "AI startup blueprint generated successfully."}
+            </p>
+
+            {/* REAL METRICS */}
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+              <MetricCard
+                label="Industry"
+                value={
+                  blueprint.business?.input_summary
+                    ?.industry_provided ?? "-"
+                }
+              />
+
+              <MetricCard
+                label="Region"
+                value={
+                  blueprint.business?.input_summary
+                    ?.target_region ?? "-"
+                }
+              />
+
+              <MetricCard
+                label="Decision"
+                value={
+                  blueprint.business?.recommendation
+                    ?.decision ?? "-"
+                }
+              />
+
+              <MetricCard
+                label="Validation"
+                value={`${blueprint.business?.validation?.input_completeness_score ?? 0}/100`}
+              />
+
+            </div>
+
           </section>
 
-          {/* Active agent section */}
-          <div
-            key={active}
-            className="animate-in fade-in slide-in-from-bottom-2 duration-500"
-          >
+          {/* ================= AGENT CONTENT ================= */}
+
+          <div key={active}>
+
             {active === "business" && (
-              <BusinessSection
-                data={blueprint.business}
-              />
+              <BusinessSection data={blueprint.business} />
             )}
 
             {active === "product" && (
-              <ProductSection
-                data={blueprint.product}
-              />
+              <ProductSection data={blueprint.product} />
             )}
 
             {active === "technical" && (
-              <TechnicalSection
-                data={blueprint.technical}
-              />
+              <TechnicalSection data={blueprint.technical} />
             )}
 
             {active === "finance" && (
-              <FinanceSection
-                data={blueprint.finance}
-              />
+              <FinanceSection data={blueprint.finance} />
             )}
 
             {active === "planner" && (
-              <PlannerSection
-                data={blueprint.planner}
-              />
+              <PlannerSection data={blueprint.planner} />
             )}
+
           </div>
+
         </main>
       </div>
     </div>

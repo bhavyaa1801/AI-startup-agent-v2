@@ -143,7 +143,22 @@ export function severityColor(sev: string) {
 }
 
 /* ---------- Bulleted list ---------- */
-export function BulletList({ items, accent = "var(--primary)" }: { items: string[]; accent?: string }) {
+export function BulletList({
+  items,
+  accent = "var(--primary)",
+}: {
+  items: any;
+  accent?: string;
+}) {
+
+  if (!Array.isArray(items)) {
+    return (
+      <p className="text-muted-foreground">
+        {items ? String(items) : "-"}
+      </p>
+    );
+  }
+
   return (
     <ul className="space-y-2.5">
       {items.map((item, i) => (
@@ -152,11 +167,16 @@ export function BulletList({ items, accent = "var(--primary)" }: { items: string
             className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
             style={{ background: accent }}
           />
-          <span className="text-foreground/85">{item}</span>
+
+          <span className="text-foreground/85">
+            {typeof item === "object"
+              ? JSON.stringify(item)
+              : item}
+          </span>
         </li>
       ))}
     </ul>
-  )
+  );
 }
 
 /* ---------- Section heading ---------- */
