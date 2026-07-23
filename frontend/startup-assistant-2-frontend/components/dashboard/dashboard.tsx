@@ -8,8 +8,8 @@ import {
   RotateCcw,
   Sparkles,
   Download,
+  LoaderCircle,
 } from "lucide-react"
-
 
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { BusinessSection } from "@/components/dashboard/sections/business-section"
@@ -20,6 +20,7 @@ import { PlannerSection } from "@/components/dashboard/sections/planner-section"
 import { MetricCard } from "@/components/dashboard/primitives"
 import { useTheme } from "@/components/theme-provider"
 import { AGENTS, type AgentId } from "@/lib/blueprint-data"
+import { exportBlueprintPdf } from "@/lib/export-blueprint-pdf"
 
 interface DashboardProps {
   blueprint: any
@@ -30,14 +31,47 @@ export function Dashboard({
   blueprint,
   onReset,
 }: DashboardProps) {
-  const [active, setActive] = useState<AgentId>("business")
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [active, setActive] =
+    useState<AgentId>("business")
+
+  const [sidebarOpen, setSidebarOpen] =
+    useState(false)
+
+  const [exporting, setExporting] =
+    useState(false)
 
   const { theme, toggle } = useTheme()
 
-  const agent = AGENTS.find((a) => a.id === active)!
+  const agent = AGENTS.find(
+    (item) => item.id === active,
+  )!
 
-  if (!blueprint) return null
+  async function handleExport() {
+    if (!blueprint || exporting) {
+      return
+    }
+
+    try {
+      setExporting(true)
+
+      await exportBlueprintPdf(blueprint)
+    } catch (error) {
+      console.error(
+        "PDF export failed:",
+        error,
+      )
+
+      alert(
+        "The PDF could not be generated. Please try again.",
+      )
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  if (!blueprint) {
+    return null
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -48,17 +82,14 @@ export function Dashboard({
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="flex flex-1 flex-col min-w-0">
-
-        {/* ================= TOP BAR ================= */}
-
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur px-6 py-3">
-
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-border bg-background/90 px-6 py-3 backdrop-blur">
           <div className="flex items-center gap-3">
-
             <button
+              type="button"
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden"
+              aria-label="Open navigation"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -74,7 +105,10 @@ export function Dashboard({
             </span>
 
             <div>
-              <h2 className="font-semibold">{agent.name}</h2>
+              <h2 className="font-semibold">
+                {agent.name}
+              </h2>
+
               <p className="text-xs text-muted-foreground">
                 {agent.tagline}
               </p>
@@ -82,13 +116,25 @@ export function Dashboard({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={exporting}
+              className="hidden items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60 sm:flex"
+            >
+              {exporting ? (
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
 
-            <button className="hidden sm:flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-muted">
-              <Download className="h-4 w-4" />
-              Export
+              {exporting
+                ? "Exporting..."
+                : "Export PDF"}
             </button>
 
             <button
+              type="button"
               onClick={onReset}
               className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-muted"
             >
@@ -96,28 +142,23 @@ export function Dashboard({
               New
             </button>
 
-            
-
             <button
+              type="button"
               onClick={toggle}
               className="rounded-lg p-2 hover:bg-muted"
+              aria-label="Change theme"
             >
-              {theme === "dark"
-                ? <Sun className="h-5 w-5" />
-                : <Moon className="h-5 w-5" />}
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
             </button>
-
           </div>
         </header>
 
-        {/* ================= MAIN ================= */}
-
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
-
-          {/* ================= HERO ================= */}
-
           <section className="mb-8 rounded-3xl border border-border bg-card p-8">
-
             <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-muted-foreground">
               <Sparkles className="h-3 w-3" />
               Blueprint Generated
@@ -133,10 +174,7 @@ export function Dashboard({
                 "AI startup blueprint generated successfully."}
             </p>
 
-            {/* REAL METRICS */}
-
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
               <MetricCard
                 label="Industry"
                 value={
@@ -153,43 +191,47 @@ export function Dashboard({
                 }
               />
 
-              
-
               <MetricCard
                 label="Validation"
-                value={`${blueprint.business?.validation?.input_completeness_score ?? 0}/100`}
+                value={`${
+                  blueprint.business?.validation
+                    ?.input_completeness_score ?? 0
+                }/100`}
               />
-
             </div>
-
           </section>
 
-          {/* ================= AGENT CONTENT ================= */}
-
           <div key={active}>
-
             {active === "business" && (
-              <BusinessSection data={blueprint.business} />
+              <BusinessSection
+                data={blueprint.business}
+              />
             )}
 
             {active === "product" && (
-              <ProductSection data={blueprint.product} />
+              <ProductSection
+                data={blueprint.product}
+              />
             )}
 
             {active === "technical" && (
-              <TechnicalSection data={blueprint.technical} />
+              <TechnicalSection
+                data={blueprint.technical}
+              />
             )}
 
             {active === "finance" && (
-              <FinanceSection data={blueprint.finance} />
+              <FinanceSection
+                data={blueprint.finance}
+              />
             )}
 
             {active === "planner" && (
-              <PlannerSection data={blueprint.planner} />
+              <PlannerSection
+                data={blueprint.planner}
+              />
             )}
-
           </div>
-
         </main>
       </div>
     </div>
