@@ -5,7 +5,7 @@ import { Navbar } from "@/components/navbar"
 import { AuroraBackground } from "@/components/aurora-background"
 import { InputCard } from "@/components/input-card"
 import { AGENTS } from "@/lib/blueprint-data"
-
+import Footer from "./footer";
 interface LandingPageProps {
   onGenerate: (data: any) => void
 }
@@ -68,10 +68,15 @@ export function LandingPage({ onGenerate }: LandingPageProps) {
           </div>
         </section>
 
-        {/* Input card */}
-        <section id="input" className="mx-auto flex max-w-4xl scroll-mt-24 justify-center pb-24 pt-6">
+                {/* Input card */}
+        <section
+          id="input"
+          className="mx-auto flex max-w-4xl scroll-mt-24 justify-center pb-24 pt-6"
+        >
           <InputCard onGenerate={onGenerate} />
         </section>
+
+        <Footer />
       </div>
     </div>
   )

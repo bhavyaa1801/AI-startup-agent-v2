@@ -184,7 +184,9 @@
 @keyframes shimmer {
   100% { transform: translateX(100%); }
 }
-
+html {
+  scroll-behavior: smooth;
+}
 .animate-float-slow { animation: float-slow 14s ease-in-out infinite; }
 .animate-float-slower { animation: float-slower 18s ease-in-out infinite; }
 .animate-pulse-ring { animation: pulse-ring 2s ease-out infinite; }

@@ -39,7 +39,7 @@ export function Navbar() {
             </a>
           ))}
         </nav>
-
+          
         
       </div>
     </header>
