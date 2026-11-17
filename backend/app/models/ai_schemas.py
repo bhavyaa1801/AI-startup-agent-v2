@@ -9,6 +9,7 @@ class FeaturePrioritization(BaseModel):
 class UserPersona(BaseModel):
     name: str
     description: str
+   
 
 
 class ProductOutput(BaseModel):
