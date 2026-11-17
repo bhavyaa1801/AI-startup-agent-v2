@@ -10,6 +10,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
 # -----------------------------
 # CORS Configuration
 # -----------------------------
@@ -20,11 +21,13 @@ app.add_middleware(
         "http://localhost:5173",
         "https://ai-startup-agent-v2.vercel.app",
         "https://ai-startup-agent-v2-lake.vercel.app",
+        "https://ai-startup-agent-v2-git-main-rajputbhavya71-8403s-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # -----------------------------
 # API Routes
 # -----------------------------
